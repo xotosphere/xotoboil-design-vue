@@ -1,0 +1,6 @@
+# IGNORE ALL HTML FILES:
+
+*.html
+
+*.tsbuildinfo
+*.md
