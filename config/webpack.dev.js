@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/typedef */
 
 const {merge} = require("webpack-merge");
-const commonConfig = require("./webpack.common");
+const crossConfiguration = require("./webpack.common");
 const deps = require("../package.json").dependencies;
 const path = require("path");
 
@@ -19,4 +19,4 @@ const devConfig = {
 	},
 };
 
-module.exports = merge(commonConfig, devConfig);
+module.exports = merge(crossConfiguration, devConfig);

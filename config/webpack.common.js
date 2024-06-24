@@ -45,7 +45,7 @@ module.exports = {
 
 	output: {
 		filename: "index.js",
-		library: "@xotoboil-storybook-vue/ui",
+		library: "@xotoboil-design-vue/ui",
 		libraryTarget: "umd",
 	},
 	externals: {
