@@ -1,25 +1,66 @@
-# Logs
+build
+coverage
+target
+**/.eslintcache
+**/coverage
+out
+**/.turbo
+*.pem
+dist
+node_modules/
+coverage/
+lerna-debug.log
+yarn-error.log
 logs
 *.log
 npm-debug.log*
-
-# Dependency directories
-node_modules/
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# dotenv environment variables file
-.env
-
-# Editor directories and files
-.idea
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 .DS_Store
-
-# Generated
-dist
-coverage
-build
+.AppleDouble
+.LSOverride
+**/*.tgz
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.history
+**/node_modules
+**/dist
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.DS_Store
+database/*
+!database/.gitkeep
+dump.rdb
+.idea
+.eslintcache
+**/ios
+**/android
+.env*
+!.env.project
+!.env.vault
+**/documentation
+.flaskenv*

@@ -1,0 +1,12 @@
+version: "3"
+services:
+    xotoboil-design-vue:
+        build:
+            context: ./
+            dockerfile: docker/dockerfile
+        image: ghcr.io/xotosphere/xotoboil-design-vue:${DOCKER_IMAGE_TAG}
+        container_name: xotoboil-design-vue
+        ports:
+            - 4066:80
+        volumes:
+            - ${PWD}/certs:/usr/certs

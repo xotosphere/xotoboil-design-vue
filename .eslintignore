@@ -1,6 +1,4 @@
-# IGNORE ALL HTML FILES:
-
 *.html
-
+preinstall.js
 *.tsbuildinfo
 *.md

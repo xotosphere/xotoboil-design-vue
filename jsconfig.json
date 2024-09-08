@@ -1,0 +1,3 @@
+{
+  "extends": "@xotosphere/xotocross-configuration-lint/src/jsconfig.json",
+}

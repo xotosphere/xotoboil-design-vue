@@ -1,13 +1,7 @@
 {
+	"extends": "@xotosphere/xotocross-configuration-lint/src/tsconfig.tsnode.json",
 	"compilerOptions": {
-		"types": ["node", "jest"],
-		"strict": false,
 		"baseUrl": "./",
-		"moduleResolution": "node",
-		"allowSyntheticDefaultImports": true,
-		"esModuleInterop": true,
-		"declaration": false,
-		"resolveJsonModule": true,
 		"rootDir": "./"
 	}
 }

@@ -1,0 +1,239 @@
+name: ci-workflow
+
+on: [push]
+
+jobs:
+  env:
+    runs-on: ubuntu-22.04
+    container:
+      image: node:18
+      options: --user 1001
+
+    steps:
+      - name: Get env files
+        run: |
+          npx --yes dotenv-vault new vlt_eeb6cc2b4e447e8b22dee3428b45e9db91f809242010430bf6abad6fa13f4f87
+          npx --yes dotenv-vault pull --dotenvMe me_6def25ea41f4644d32e36a0cf683b11ae333f73e9e997b9b33edb5e696b8a3ea ci .env.xotocross
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          include-hidden-files: true
+          name: secret-artifact
+          path: .env.xotocross
+          retention-days: 1
+      - name: Mask .env file
+        run: |
+          while IFS='=' read -r key value
+          do
+              echo "::add-mask::$value"
+          done < .env.xotocross
+      - name: Load .env file
+        run: grep -o '^[^#]*' .env.xotocross >> "$GITHUB_ENV"
+
+      - run: echo "value=$XOTOCROSS_GITHUB_ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
+        id: variables
+
+      - name: Checkout root repo
+        uses: actions/checkout@v3.1.0
+        with:
+          repository: xotosphere/xotoboil-design-vue
+          token: ${{ steps.variables.outputs.value }}
+          submodules: true
+          fetch-depth: 0
+
+      - name: Checkout root repo branch
+        if: ${{ github.ref_type }} == 'branch'
+        run: npx -- yarn run git:checkout --continue -- ${{ github.ref_name }} || true
+
+      - name: Checkout current repo
+        run: git -C package/xotoboil-design-vue checkout ${{ github.ref_name }}
+
+      - name: Download secret-artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: secret-artifact
+
+      - name: Generate final .env file
+        run: cat environment/.env >> .env && cat .env.xotocross >> .env
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          include-hidden-files: true
+          name: env-artifact
+          path: .env*
+          retention-days: 1
+
+  initialize:
+    needs: ["env"]
+    runs-on: ubuntu-22.04
+    container:
+      image: node:18
+      options: --user 1001
+
+    steps:
+      - name: Download secret-artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: secret-artifact
+      - name: Mask .env file
+        run: |
+          while IFS='=' read -r key value
+          do
+              echo "::add-mask::$value"
+          done < .env.xotocross
+
+      - name: Load .env file
+        run: grep -o '^[^#]*' .env.xotocross >> "$GITHUB_ENV"
+
+      - run: echo "value=$XOTOCROSS_GITHUB_ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
+        id: variables
+
+      - name: Checkout root repo
+        uses: actions/checkout@v3.1.0
+        with:
+          repository: xotosphere/xotoboil-design-vue
+          token: ${{ steps.variables.outputs.value }}
+          submodules: true
+          fetch-depth: 0
+
+      - name: Checkout root repo branch
+        if: ${{ github.ref_type }} == 'branch'
+        run: npx -- yarn run git:checkout --continue -- ${{ github.ref_name }} || true
+
+      - name: Checkout current repo
+        run: git -C package/xotoboil-design-vue checkout ${{ github.ref_name }}
+
+      - name: Download env-artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: env-artifact
+
+      - name: Cache node modules
+        id: node-modules-cache
+        uses: actions/cache@v3
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Authenticate with private npm package
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: echo "//npm.pkg.github.com/:_authToken=${{ steps.variables.outputs.value }}" >> ./.npmrc
+
+      - name: Check yarn version
+        run: yarn set version stable
+
+      - name: Install package
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: YARN_ENABLE_IMMUTABLE_INSTALLS=false ACCESS_TOKEN=${{ steps.variables.outputs.value }} yarn install
+
+  test:
+    runs-on: ubuntu-22.04
+    needs: ["initialize", "env"]
+    container:
+      image: node:18
+      options: --user 1001
+
+    steps:
+      - name: Download secret-artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: secret-artifact
+      - name: Mask .env file
+        run: |
+          while IFS='=' read -r key value
+          do
+              echo "::add-mask::$value"
+          done < .env.xotocross
+
+      - name: Load .env file
+        run: grep -o '^[^#]*' .env.xotocross >> "$GITHUB_ENV"
+
+      - run: echo "value=$XOTOCROSS_GITHUB_ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
+        id: variables
+
+      - name: Checkout root repo
+        uses: actions/checkout@v3.1.0
+        with:
+          repository: xotosphere/xotoboil-design-vue
+          token: ${{ steps.variables.outputs.value }}
+          submodules: true
+          fetch-depth: 0
+
+      - name: Checkout root repo branch
+        if: ${{ github.ref_type }} == 'branch'
+        run: npx -- yarn run git:checkout --continue -- ${{ github.ref_name }} || true
+
+      - name: Checkout current repo
+        run: git -C package/xotoboil-design-vue checkout ${{ github.ref_name }}
+
+      - name: Download env-artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: env-artifact
+
+      - name: Get cache node modules
+        uses: actions/cache/restore@v3
+        id: node-modules-cache
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Run test
+        run: npx dotenv-cli -e .env yarn workspace @xotosphere/xotoboil-design-vue test:service
+
+  build:
+    runs-on: ubuntu-22.04
+    needs: ["initialize", "env"]
+    container:
+      image: node:18
+      options: --user 1001
+
+    steps:
+      - name: Download secret-artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: secret-artifact
+      - name: Mask .env file
+        run: |
+          while IFS='=' read -r key value
+          do
+              echo "::add-mask::$value"
+          done < .env.xotocross
+
+      - name: Load .env file
+        run: grep -o '^[^#]*' .env.xotocross >> "$GITHUB_ENV"
+
+      - run: echo "value=$XOTOCROSS_GITHUB_ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
+        id: variables
+
+      - name: Checkout root repo
+        uses: actions/checkout@v3.1.0
+        with:
+          repository: xotosphere/xotoboil-design-vue
+          token: ${{ steps.variables.outputs.value }}
+          submodules: true
+          fetch-depth: 0
+
+      - name: Checkout root repo branch
+        if: ${{ github.ref_type }} == 'branch'
+        run: npx -- yarn run git:checkout --continue -- ${{ github.ref_name }} || true
+
+      - name: Checkout current repo
+        run: git -C package/xotoboil-design-vue checkout ${{ github.ref_name }}
+
+      - name: Download env-artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: env-artifact
+
+      - name: Get cache node modules
+        uses: actions/cache/restore@v3
+        id: node-modules-cache
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Build package
+        run: npx dotenv-cli -e .env -- npx yarn run build --filter=./package/xotoboil-design-vue

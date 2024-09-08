@@ -1,0 +1,86 @@
+name: ci-release
+
+permissions:
+  actions: write
+  checks: write
+  contents: write
+  deployments: write
+  id-token: write
+  issues: write
+  discussions: write
+  packages: write
+  pages: write
+  pull-requests: write
+  repository-projects: write
+  security-events: write
+  statuses: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_as:
+        description: "version upgrade"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  env:
+    runs-on: ubuntu-22.04
+    container:
+      image: node:18
+      options: --user 1001
+
+    steps:
+      - name: Get env files
+        run: |
+          npx --yes dotenv-vault new vlt_eeb6cc2b4e447e8b22dee3428b45e9db91f809242010430bf6abad6fa13f4f87
+          npx --yes dotenv-vault pull --dotenvMe me_6def25ea41f4644d32e36a0cf683b11ae333f73e9e997b9b33edb5e696b8a3ea ci .env.xotocross
+
+      - name: Mask .env file
+        run: |
+          while IFS='=' read -r key value
+          do
+            echo "::add-mask::$value"
+          done < .env.xotocross
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          include-hidden-files: true
+          name: secret-artifact
+          path: .env.xotocross
+          retention-days: 1
+  release:
+    needs: ["env"]
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Download secret-artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: secret-artifact
+      - name: Mask .env file
+        run: |
+          while IFS='=' read -r key value
+          do
+              echo "::add-mask::$value"
+          done < .env.xotocross
+      - name: Load .env file
+        run: grep -o '^[^#]*' .env.xotocross >> "$GITHUB_ENV"
+
+      - run: echo "value=$XOTOCROSS_GITHUB_ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
+        id: variables
+
+      - name: release package
+        uses: xotosphere/xotopipe-release-yarn@v0.0.3
+        with:
+          as: ${{ inputs.release_as }}
+          registry: "true"
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          access_token: "${{ steps.variables.outputs.value }}"
+          build: "false"

@@ -1,0 +1,49 @@
+@font-face {
+	font-family: primary;
+	font-weight: normal;
+	src: url("./font/LocatorRegular.otf");
+}
+
+@font-face {
+	font-family: primary;
+	font-weight: bold;
+	src: url("./font/LocatorBold.otf");
+}
+
+html * {
+	font-family: primary;
+	font-size: var(--font-size--normal);
+	line-height: var(--line-height);
+}
+
+/*
+ Set scrollbar android Effect
+*/
+
+::-webkit-scrollbar {
+	width: 5px;
+}
+
+::-webkit-scrollbar-track {
+	background: rgba(255, 255, 255, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+	margin-right: 5px;
+	background: rgba(0, 0, 0, 0.5);
+	border-radius: 5px;
+}
+
+/*
+ Set input number smartphone appearance
+*/
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+	margin: 0;
+	-webkit-appearance: none;
+}
+
+input[type="number"] {
+	-moz-appearance: textfield;
+}
